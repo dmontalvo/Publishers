@@ -36,7 +36,6 @@ pagenum = 1
 master = None
 showmerged = True
 perpage = ALPHA_PER_PAGE
-extra = 0
 sorting = "alphabetical"
 searchstr = None
 if form.getlist("letter"):
@@ -48,8 +47,6 @@ if form.getlist("radio"):
 if form.getlist("showmerged"):
     if form.getlist("showmerged")[0] == "False":
         showmerged = False
-if form.getlist("extra"):
-    extra = int(form.getlist("extra")[0])
 if form.getlist("sorting"):
     if form.getlist("sorting")[0] == "count":
         sorting = "count"
@@ -125,7 +122,7 @@ if sorting != "alphabetical":
         pubs.append((pub[1], pub[0], pub[2]))
 maxindex = perpage * pagenum
 minindex = maxindex - perpage
-displaylist = pubs[minindex:maxindex+extra]
+displaylist = pubs[minindex:maxindex]
 maxpage = (len(pubs)+perpage-1)/perpage+1
 print "Sorting: "
 if sorting == "alphabetical":
@@ -151,9 +148,9 @@ if showmerged:
 else:
     print '<br>Show Merged: <a href="http://ol-bots.us.archive.org/cgi-bin/publishers.py?page=%s&letter=%s&showmerged=True&sorting=%s%s">Yes</a> No' % (pagenum, letter, sorting, searchsuffix)
 if showmerged:
-    print '<p><form name="myform" method="POST"><table border=1><tr><th>Master Publisher</th><th>Count</th><th>Merge</th><th>Master</th><th>Merged</th></tr>'
+    print '<p><form name="myform" method="POST"><table border=1 id="testtable"><tr><th>Master Publisher</th><th>Count</th><th>Merge</th><th>Master</th><th>Merged</th></tr>'
 else:
-    print '<p><form name="myform" method="POST"><table border=1><tr><th>Master Publisher</th><th>Count</th><th>Merge</th><th>Master</th></tr>'
+    print '<p><form name="myform" method="POST"><table border=1 id="testtable"><tr><th>Master Publisher</th><th>Count</th><th>Merge</th><th>Master</th></tr>'
 for pub in displaylist:
     mergedlist = json.JSONDecoder().decode(pub[2])
     merged_str = ', '.join(mergedlist).encode('utf-8')
@@ -166,9 +163,25 @@ for pub in displaylist:
     else:
         row = '<tr><td>%s</td><td>%s</td><td><input type="checkbox" name="checkbox" value="%s"></td><td><input type="radio" name="radio" value="%s"></td></tr>' % (column1, pub[1], pub[0], pub[0])
     print row
-if maxindex + extra < len(pubs):
-    print '</table><br><a href="http://ol-bots.us.archive.org/cgi-bin/publishers.py?page=%s&letter=%s&showmerged=%s&extra=%s&sorting=%s%s">Show More</a><p><input type="submit" value="Submit"></form></body></html>' % (pagenum, letter, showmerged, extra + perpage, sorting, searchsuffix)
+if maxindex < len(pubs):
+    print '</table><br><div id="showmore"><a href="http://ol-bots.us.archive.org/cgi-bin/publishers.py">Show More</a></div><p><input type="submit" value="Submit"></form>'
 else:
-    print '</table><p><input type="submit" value="Submit"></form></body></html>'
-
+    print '</table><p><input type="submit" value="Submit"></form>'
+print '<script src="http://openlibrary.org/static/upstream/js/jquery-1.3.2.min.js"></script>'
+print '''<script>
+var $count = 0
+$(document).ready(function(){
+$("#showmore").click(function(event){
+event.preventDefault();
+$count++
+$.get('pubfetch.py', {"letter": "%s", "pagenum": "%s", "showmerged": "%s", "sorting": "%s", "pubsearch": "%s", "count":$count},function(data) {
+  $("#testtable").append(data);
+  if(%s + $count * %s >= %s) {
+    $("#showmore").hide()
+  }
+});
+});
+});
+</script>''' % (letter, pagenum, showmerged, sorting, searchstr, maxindex, perpage, len(pubs))
+print '</body></html>'
 c.close()
