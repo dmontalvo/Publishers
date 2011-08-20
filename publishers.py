@@ -152,8 +152,10 @@ if showmerged:
 else:
     print '<p><form name="myform" method="POST"><table border=1 id="testtable"><tr><th>Master Publisher</th><th>Count</th><th>Merge</th><th>Master</th></tr>'
 for pub in displaylist:
-    mergedlist = json.JSONDecoder().decode(pub[2])
-    merged_str = ', '.join(mergedlist).encode('utf-8')
+    merged_str = ''
+    if pub[2] is not None:
+        mergedlist = json.JSONDecoder().decode(pub[2])
+        merged_str = ', '.join(mergedlist).encode('utf-8')
     column1 = pub[0]
     if sorting != 'alphabetical' and letter != 'search':
         pubindex = lookuplist.index(pub[0])
