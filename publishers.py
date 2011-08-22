@@ -20,7 +20,10 @@ def merge(masterpub, mergelist):
         c.execute('select * from publishers where publisher=%s', (pub,))      
         row = c.fetchone()
         count += row[1]
-        sublist = json.JSONDecoder().decode(row[2])
+        if row[2] is None:
+            sublist = []
+        else:
+            sublist = json.JSONDecoder().decode(row[2])
         compoundlist += sublist
         c.execute('delete from publishers where publisher=%s', (pub,))        
     publist = mergelist
